@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useRef as useReactRef } from "react";
 import { useLanguage } from "./LanguageContext";
 import { translations } from "../translations";
-import { hasTypeGpuSupport } from "./typegpuProbe";
+import { destroyTypeGpuRuntime, runTypeGpuPulse } from "./typegpuProbe";
 import type { WorkerRequest, WorkerResponse } from "./symbolicWorker";
 import { MathTex } from "./MathTex";
 import { FUNC_TOOLTIPS } from "../translations";
@@ -136,6 +136,7 @@ export function SymbolicCalculator() {
   const [iterations, setIterations] = useState(1);
   const [result, setResult]       = useState<any>(null);
   const [isCalculating, setIsCalculating] = useState(false);
+  const [gpuActive, setGpuActive] = useState<boolean | null>(null);
   const workerRef = useRef<Worker | null>(null);
   const requestIdRef = useRef(0);
   const { language } = useLanguage();
@@ -163,6 +164,7 @@ export function SymbolicCalculator() {
     return () => {
       workerRef.current?.terminate();
       workerRef.current = null;
+      void destroyTypeGpuRuntime();
     };
   }, []);
   const calculate = async () => {
@@ -170,7 +172,8 @@ export function SymbolicCalculator() {
     setIsCalculating(true);
 
     try {
-      await hasTypeGpuSupport();
+      const usedGpu = await runTypeGpuPulse(iterations);
+      setGpuActive(usedGpu);
 
       if (!workerRef.current) {
         workerRef.current = new Worker(new URL("./symbolicWorker.ts", import.meta.url), { type: "module" });
@@ -392,6 +395,12 @@ export function SymbolicCalculator() {
         </button>
       </div>
 
+      {gpuActive !== null && (
+        <div style={styles.gpuStatus}>
+          GPU {gpuActive ? "ON (TypeGPU)" : "OFF (fallback CPU)"}
+        </div>
+      )}
+
       {/* ── Error ── */}
       {result?.error && (
         <div style={styles.errorBox}>
@@ -574,6 +583,15 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 0,
     transition: "background 0.07s, color 0.07s",
     marginLeft: "auto",
+  },
+
+  gpuStatus: {
+    border: BORDER,
+    color: BLUE,
+    padding: "4px 8px",
+    marginBottom: 10,
+    fontSize: "0.8rem",
+    letterSpacing: "0.06em",
   },
 
   errorBox: {
