@@ -1,12 +1,10 @@
-import { useState, useRef, useRef as useReactRef } from "react";
+import { useEffect, useState, useRef, useRef as useReactRef } from "react";
 import { useLanguage } from "./LanguageContext";
 import { translations } from "../translations";
-import { parseExpr } from "../symbolic/parser";
-import { stringifyMath } from "../symbolic/stringify";
-import { composeAST } from "../symbolic/composeAST";
-import { simplifyAST } from "../symbolic/simplifyAST";
+import { hasTypeGpuSupport } from "./typegpuProbe";
+import type { WorkerRequest, WorkerResponse } from "./symbolicWorker";
 import { MathTex } from "./MathTex";
-  import { FUNC_TOOLTIPS } from "../translations";
+import { FUNC_TOOLTIPS } from "../translations";
 
 function isMobile() {
   return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|Mobile/i.test(navigator.userAgent);
@@ -137,6 +135,9 @@ export function SymbolicCalculator() {
   const [formula, setFormula]     = useState("");
   const [iterations, setIterations] = useState(1);
   const [result, setResult]       = useState<any>(null);
+  const [isCalculating, setIsCalculating] = useState(false);
+  const workerRef = useRef<Worker | null>(null);
+  const requestIdRef = useRef(0);
   const { language } = useLanguage();
   const t = translations[language];
   const funcTips = FUNC_TOOLTIPS[language];
@@ -157,19 +158,60 @@ export function SymbolicCalculator() {
     else setFormula(f => f + txt);
   };
 
-  const calculate = () => {
+
+  useEffect(() => {
+    return () => {
+      workerRef.current?.terminate();
+      workerRef.current = null;
+    };
+  }, []);
+  const calculate = async () => {
+    const reqId = ++requestIdRef.current;
+    setIsCalculating(true);
+
     try {
-      const formulaFixed = formula.replace(/\bTAU\b/g, "(PI*2)");
-      const base = parseExpr(formulaFixed);
-      let current = parseExpr("x");
-      const steps: { pretty: string }[] = [];
-      for (let i = 0; i < iterations; i++) {
-        current = simplifyAST(composeAST(base, current));
-        steps.push({ pretty: stringifyMath(current) });
+      await hasTypeGpuSupport();
+
+      if (!workerRef.current) {
+        workerRef.current = new Worker(new URL("./symbolicWorker.ts", import.meta.url), { type: "module" });
       }
-      setResult({ base: { pretty: stringifyMath(base) }, steps });
+
+      const resultFromWorker = await new Promise<WorkerResponse>((resolve, reject) => {
+        if (!workerRef.current) {
+          reject(new Error("Worker unavailable"));
+          return;
+        }
+
+        const onMessage = (event: MessageEvent<WorkerResponse>) => {
+          if (event.data.id !== reqId) {
+            return;
+          }
+          workerRef.current?.removeEventListener("message", onMessage);
+          resolve(event.data);
+        };
+
+        const onError = (error: ErrorEvent) => {
+          workerRef.current?.removeEventListener("message", onMessage);
+          workerRef.current?.removeEventListener("error", onError);
+          reject(error);
+        };
+
+        workerRef.current.addEventListener("message", onMessage);
+        workerRef.current.addEventListener("error", onError, { once: true });
+
+        const payload: WorkerRequest = { id: reqId, formula, iterations };
+        workerRef.current.postMessage(payload);
+      });
+
+      if (resultFromWorker.error) {
+        setResult({ error: resultFromWorker.error });
+      } else if (resultFromWorker.result) {
+        setResult(resultFromWorker.result);
+      }
     } catch (e) {
       setResult({ error: String(e) });
+    } finally {
+      setIsCalculating(false);
     }
   };
 
@@ -201,7 +243,7 @@ export function SymbolicCalculator() {
             style={mergedInput}
             value={formula}
             onChange={e => setFormula(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && calculate()}
+            onKeyDown={e => e.key === "Enter" && void calculate()}
             placeholder={t.placeholder}
             spellCheck={false}
           />
@@ -343,9 +385,10 @@ export function SymbolicCalculator() {
             (e.currentTarget as HTMLButtonElement).style.background = "#000000";
             (e.currentTarget as HTMLButtonElement).style.color = "#ffffff";
           }}
-          onClick={calculate}
+          onClick={() => void calculate()}
+          disabled={isCalculating}
         >
-          {t.calculate}
+          {isCalculating ? `${t.calculate}...` : t.calculate}
         </button>
       </div>
 
