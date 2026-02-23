@@ -89,4 +89,7 @@ El workflow de GitHub Actions construye el proyecto y publica el contenido de la
 
 ## Licencia
 
-Este proyecto está bajo la licencia MIT.
+Este software NO es de uso comercial.
+Está protegido bajo la Custom Non-Commercial Attribution License v1.0 (2026).
+
+Lee el archivo LICENSE antes de usar el código.
