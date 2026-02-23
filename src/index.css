@@ -1,0 +1,294 @@
+@import "../styles/globals.css";
+
+/* latin */
+@font-face {
+  font-family: 'Share Tech Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(https://fonts.gstatic.com/s/sharetechmono/v16/J7aHnp1uDWRBEqV98dVQztYldFcLowEF.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "DeterminationMono";
+  src: url("https://undertale.com/assets/fonts/8bitOperatorPlus-Bold.woff") format("woff");
+  font-display: swap;
+}
+
+@layer base {
+  :root {
+    /* Paleta Undertale/Deltarune */
+    --bg: #000000;
+    --fg: #ffffff;
+    --border: #ffffff;
+    --border-w: 3px;
+    --accent: #ffff00;
+    /* amarillo soul */
+    --accent2: #00b0ff;
+    /* azul deltarune */
+    --muted: #444444;
+    --box-bg: #000000;
+    --font-main: "DeterminationMono", "Share Tech Mono", monospace;
+
+    /* Sobreescribir variables globales si las hay */
+    --background: var(--bg);
+    --foreground: var(--fg);
+
+    @apply font-mono;
+  }
+
+  body {
+    font-family: var(--font-main);
+    background-color: var(--bg);
+    color: var(--fg);
+    @apply grid place-items-center min-w-[320px] min-h-screen relative m-0;
+    /* Sin antialiasing para look pixel-art */
+    -webkit-font-smoothing: none;
+    font-smooth: never;
+    image-rendering: pixelated;
+  }
+
+  /* Todos los elementos de formulario y cajas: bordes cuadrados duros */
+  input,
+  button,
+  select,
+  textarea,
+  [class*="card"],
+  [class*="box"],
+  [class*="panel"],
+  [class*="container"],
+  [class*="wrapper"],
+  dialog,
+  details,
+  summary {
+    border-radius: 0 !important;
+  }
+
+  /* Inputs estilo Undertale */
+  input[type="text"],
+  input[type="number"],
+  textarea,
+  select {
+    background: var(--bg);
+    color: var(--fg);
+    border: var(--border-w) solid var(--border);
+    padding: 6px 10px;
+    font-family: var(--font-main);
+    font-size: 1rem;
+    outline: none;
+    border-radius: 0;
+    transition: border-color 0.1s;
+  }
+
+  input[type="text"]:focus,
+  input[type="number"]:focus,
+  textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+
+  /* Botones estilo "Fight/Act/Item/Mercy" */
+  button,
+  [class*="btn"] {
+    background: var(--bg);
+    color: var(--fg);
+    border: var(--border-w) solid var(--border);
+    padding: 8px 20px;
+    font-family: var(--font-main);
+    font-size: 1rem;
+    cursor: pointer;
+    border-radius: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: background 0.08s, color 0.08s;
+    position: relative;
+  }
+
+  button:hover,
+  [class*="btn"]:hover {
+    background: var(--fg);
+    color: var(--bg);
+  }
+
+  button:active {
+    transform: translate(2px, 2px);
+  }
+
+  /* Headings con estilo DETERMINATION */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-main);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    font-size: 2.2rem;
+  }
+
+  h2 {
+    font-size: 1.6rem;
+  }
+
+  /* Cajas / cards con borde blanco duro */
+  [class*="card"],
+  [class*="box"],
+  [class*="panel"],
+  [class*="container"]:not(body) {
+    border: var(--border-w) solid var(--border);
+    background: var(--box-bg);
+    padding: 16px;
+  }
+
+  /* Scrollbar estilo pixel */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--bg);
+    border-left: 2px solid var(--border);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--fg);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--accent);
+  }
+
+  /* Links */
+  a {
+    color: var(--accent2);
+    text-decoration: none;
+    border-bottom: 1px solid var(--accent2);
+  }
+
+  a:hover {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* Cursor Undertale — flecha del corazón rojo (≈ soul) */
+  * {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='20'%3E%3Cpolygon points='0,0 0,14 4,10 7,16 9,15 6,9 11,9' fill='%23ff0000' stroke='%23000' stroke-width='1'/%3E%3C/svg%3E") 0 0, auto;
+  }
+}
+
+/* ─── Fondo animado tipo Undertale (patrón de ♥ en lugar del GIF de Bun) ─── */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.5;
+  background-image: url("./assets/images/logo.gif");
+  background-size: 256px;
+  transform: rotate(-12deg) scale(1.5);
+  animation: slide 3s linear infinite;
+  pointer-events: none;
+}
+
+/* Capa extra: scanlines sutiles */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: repeating-linear-gradient(to bottom,
+      transparent 0px,
+      transparent 2px,
+      rgba(0, 0, 0, 0.5) 2px,
+      rgba(0, 0, 0, 0.5) 4px);
+}
+
+/* ─── Animaciones ─── */
+@keyframes slide {
+  from {
+    background-position: 0 0;
+  }
+
+  to {
+    background-position: 256px 224px;
+  }
+}
+
+/* Texto parpadeante (para labels tipo "* It is your turn.") */
+@keyframes blink {
+
+  0%,
+  49% {
+    opacity: 1;
+  }
+
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.blink {
+  animation: blink 1s step-end infinite;
+}
+
+/* Entrada de texto estilo batalla */
+@keyframes typewriter {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+
+  to {
+    clip-path: inset(0 0% 0 0);
+  }
+}
+
+.typewriter {
+  animation: typewriter 0.6s steps(20) forwards;
+}
+
+/* El ♥ soul como decoración */
+@keyframes soul-bounce {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+.soul::before {
+  content: "♥";
+  color: #ff0000;
+  display: inline-block;
+  margin-right: 6px;
+  animation: soul-bounce 0.8s ease-in-out infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion) {
+
+  *,
+  ::before,
+  ::after {
+    animation: none !important;
+  }
+}
