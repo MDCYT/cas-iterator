@@ -39,4 +39,4 @@ jobs:
 
           git add .
           git commit -m "Deploy dist to pages branch"
-          git push --force https://x-access-token:${GH_TOKEN}@github.com/galleniz/cas-iterator.git pages
+          git push --force https://x-access-token:${GH_TOKEN}@github.com/MDCYT/cas-iterator.git pages
